@@ -11,6 +11,7 @@ my $build = Module::Build->new(
     requires           => {
             'Test::More'           => '0',
             'Text::Diff'           => '0',
+            'File::Slurp'          => '0',
     },
 );
 
