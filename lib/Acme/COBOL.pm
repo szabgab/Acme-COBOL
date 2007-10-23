@@ -196,9 +196,21 @@ sub _parse_sentence {
             (my $disp = $sentence) =~ s/^\s{4,}DISPLAY//x;
             my $str = '';
             my $last = 0;
-            while ($disp =~ m/(?:\s+|\s*,\s*)"([^"]*)"/g) {
-                $str .= $1;
-                $last = $LAST_MATCH_END[1]+1;
+            while ($disp =~ m/(?:\s+|\s*,\s*)("([^"]*)"|($VAR_NAME_REGEX))/g) {
+                #$str .= $LAST_PAREN_MATCH;
+                if (defined $2) {
+                    $str .= $2;
+                } else {
+                    my $name = $3;
+                    # padding of strings
+                    if ($vars{$name}{picture} =~ m/^X+$/x) {
+                        my $width = length $vars{$name}{picture};
+                        $str .= sprintf("%-${width}s", $vars{$name}{value});
+                    } else {
+                        error("Invalid picture '$vars{$name}{picture}'");
+                    }
+                }
+                $last = $LAST_MATCH_END[1];
             }
             if ($last < length($disp)) {
                 error("Invalid DISPLAY: '$sentence'\nLAST_MATCH_END:$last length: " .  length($disp));
@@ -221,7 +233,7 @@ sub _parse_sentence {
         if ($sentence =~ m/^\s{4,}  ACCEPT \s+ ($VAR_NAME_REGEX)$/x) {
             my $name = $1;
             die "Variable '$name' was not declared. '$sentence'" if not exists $vars{$name};
-            $vars{$name}{value} = <STDIN>;
+            chomp($vars{$name}{value} = <STDIN>);
             # TODO: check if the value fits the picture?
             return;
         }
