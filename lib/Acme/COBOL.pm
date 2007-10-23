@@ -69,7 +69,7 @@ sub _next_sentence {
             my $indicator = substr($line, 0,1, "");
             if ($indicator eq '*') {$row++; next;}
             if ($indicator ne ' ') {
-                die "ERROR: Incorrect indicator '$indicator' in line $row\n$lines[$row]\n";
+                error("Incorrect indicator '$indicator' in line $row\n$lines[$row]");
             }
 
             if ($line =~ /^\s*$/)  {$row++; next;}
@@ -112,32 +112,69 @@ sub _parse_sentence {
             $requirements{identification_division} = 1;
             return;
         } else {
-            die "ERROR: missing IDENTIFICATION DIVISION\n";
+            error("missing IDENTIFICATION DIVISION");
         }
     }
 
     if ($self->get_state eq "identification_division") {
         if ($sentence eq "PROGRAM-ID") {
             if ($requirements{program_id}) {
-                die "ERROR: PROGRAM-ID was already set\n";
+                error("PROGRAM-ID was already set");
             }
             $self->set_state("program_id");
             return;
         }
-        # TODO else error??
+        if ($sentence =~ /^ENVIRONMENT\s+DIVISION\s*$/) {
+            $requirements{environment_division} = 1;
+            $self->set_state("environment_division");
+            return;
+        }
+        error("Not processed sentence in IDENTIFICATION DIVISION: '$sentence'")
     }
 
+    if ($self->get_state eq "environment_division") {
+        if ($sentence =~ /^DATA\s+DIVISION\s*$/) {
+            $requirements{data_division} = 1;
+            $self->set_state("data_division");
+            return;
+        }
+        error("Not processed sentence in ENVIRONMENT DIVISION: '$sentence'")
+    }
+
+    if ($self->get_state eq "data_division") {
+        if ($sentence =~ /^PROCEDURE\s+DIVISION\s*$/) {
+            $requirements{procedure_division} = 1;
+            $self->set_state("procedure_division");
+            return;
+        }
+        error("Not processed sentence in DATA DIVISION: '$sentence'")
+    }
+
+    # special treatment as PROGRAM-ID. is sorta sentence itself
     if ($self->get_state eq "program_id") {
         $sentence =~ s/^\s+//;
-        if ($sentence =~ m/^[A-Z-]+$/x) {
+        if ($sentence =~ m/^[A-Z-]+$/ix) {
             # TODO: optionally require to be the same as the name of the file
             $requirements{program_id} = $sentence;
             $self->set_state("identification_division");
+            return;
         } else {
-            die "ERROR: Invalid program_id '$sentence'\n";
+            error("Invalid program_id '$sentence'");
         }
     }
 
+    if ($self->get_state eq "procedure_division") {
+        if ($sentence =~ /^    \s*DISPLAY\s"([^"]*)"$/) {
+            print "$1\n";
+            return;
+        }
+        if ($sentence =~ /^    \s*STOP\s+RUN$/) {
+            $requirements{stop_run}++;
+            exit;
+        }
+    }
+
+    error("Sentence not processed: '$sentence'");
     return;
 }
 
@@ -154,11 +191,18 @@ sub run_file {
     my ($self, $file) = @_;
 
     $self->parse($file);
+    return;
 }
 
 # should compile a COBOL file and create an executable Perl file?
 sub compile_file {
     my ($self) = @_;
+    return;
+}
+
+sub error {
+    my ($msg) = @_;
+    die "ERROR: $msg\n";
 }
 
 =head1 NAME

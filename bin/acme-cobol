@@ -14,13 +14,18 @@ GetOptions(\%opt,
     "parse_debug",
     "help",
     "mode=s",
+    "std=s",
 ) or usage();
 usage() if $opt{help};
 
 my $file = shift or usage();
 
 if ($opt{mode} eq 'cobc') {
-    system "cobc $file -x -o demo";
+    my $std = '';
+    if ($opt{std}) {
+        $std = "--std $opt{std}";
+    }
+    system "cobc $file -x $std -o demo";
     system "./demo";
     unlink "demo";
 } elsif ($opt{mode} eq 'acme') {

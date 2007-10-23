@@ -8,11 +8,22 @@ my $tests = 0;
 
 # on the command line one can give names of .in files
 my @in = <examples/*.in>;
-my $mode = '';
-GetOptions("mode=s" => \$mode) or die;
-if ($mode) {
-    $mode = "--mode $mode";
+my %opt = (
+    mode => '',
+    std  => '',
+);
+
+GetOptions(\%opt,
+    "mode=s",
+    "std=s",
+) or die;
+my $opt = '';
+foreach my $f (qw(mode std)) {
+    if ($opt{$f}) {
+        $opt .= " --$f $opt{$f}";
+    }
 }
+
 if (@ARGV) {
     @in = @ARGV;
 }
@@ -23,7 +34,7 @@ my $cobol = './bin/acme-cobol';
 foreach my $in (@in) {
     my $file = substr $in, 0, -3;
     (my $name = $file) =~ s/\.\d+$//;
-    my $cmd = "$cobol $mode $name.cob >out 2>err <$in";
+    my $cmd = "$cobol $opt $name.cob >out 2>err <$in";
     diag $cmd;
     system $cmd;
     foreach my $std (qw(out err)) {
