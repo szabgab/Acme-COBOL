@@ -23,6 +23,9 @@ my %requirements = (
     stop_run                => 0,
 );
 
+my %paragraph;
+my $current_paragraph;
+
 
 sub new {
     my ($class, %config) = @_;
@@ -65,6 +68,8 @@ sub _next_sentence {
             $line = $left_over;
             $left_over = '';
         } else {
+            if ($line =~ /^\s*$/) { $row++; next; } # plain empty line
+
             my $line_number = substr($line, 0,6, "");
             #$self->_check_line_numbers($line_number);
 
@@ -187,6 +192,16 @@ sub _parse_sentence {
             $requirements{stop_run}++;
             exit;
         }
+        if ($sentence =~ /^[A-Z-]+$/) {
+            if ($paragraph{$sentence}) {
+                error("Paragraph '$sentence' was already defined");
+            }
+            $paragraph{$sentence} = 1;
+            $current_paragraph = $sentence;
+            return;
+        }
+
+        error("Not processed sentence in PROCEDURE DIVISION: '$sentence'")
     }
 
     error("Sentence not processed: '$sentence'");
