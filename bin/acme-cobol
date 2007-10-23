@@ -3,23 +3,30 @@ use strict;
 use warnings FATAL => 'all';
 
 use Getopt::Long qw(GetOptions);
-my %opt;
+my %opt = (
+    mode => 'acme',
+);
 
 GetOptions(\%opt,
     "parse_debug",
     "help",
+    "mode=s",
 ) or usage();
 usage() if $opt{help};
 
 my $file = shift;
 
-#system "cobc $file -o demo";
-#system "./demo";
-#unlink "demo";
-
-use Acme::COBOL;
-my $cobol = Acme::COBOL->new(%opt);
-$cobol->run_file($file);
+if ($opt{mode} eq 'cobc') {
+    system "cobc $file -x -o demo";
+    system "./demo";
+    unlink "demo";
+} elsif ($opt{mode} eq 'acme') {
+    require Acme::COBOL;
+    my $cobol = Acme::COBOL->new(%opt);
+    $cobol->run_file($file);
+} else {
+    die "Invalid mode '$opt{mode}'\n";
+}
 
 
 
@@ -28,6 +35,7 @@ sub usage {
 Usage: $0 FILENAME
         --help
         --parse_debug
+        --mode [cobc|acme]
 END_USAGE
 
     exit;

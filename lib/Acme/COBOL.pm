@@ -246,6 +246,11 @@ If there is anything in this area that should be reported as error.
 
 =back
 
+=head1 See Also
+
+L<http://www.perlmonks.org/?node_id=18048>
+
+L<http://www.perl.com/pub/a/2000/05/cobol.html>
 
 =head1 Copyright
 
