@@ -27,7 +27,8 @@ my %paragraph;
 my $current_paragraph;
 my %vars;
 
-my $VAR_NAME_REGEX = qr/[a-zA-Z-]+/;
+my $VAR_NAME_REGEX = qr/[\da-zA-Z-]+/;
+my $EXPRESSION_REGEX = qr/$VAR_NAME_REGEX\s*  \+ \s*$VAR_NAME_REGEX/x;
 
 sub new {
     my ($class, %config) = @_;
@@ -151,14 +152,15 @@ sub _parse_sentence {
     }
 
     #  01 Name PIC X(5).
+    #  02 X2   PIC 9(3).
     if ($self->get_state eq "data_division") {
         my $section = $self->get_section;
         if ($section and $section eq "working_storage") {
-            if ($sentence =~ m/01  \s+ ($VAR_NAME_REGEX) \s+ PIC\s+X\((\d+)\)  $/x) {
+            if ($sentence =~ m/01  \s+ ($VAR_NAME_REGEX) \s+ PIC\s+([9X])\((\d+)\)  $/x) {
                 if ($vars{$1}) {
                     error("Variable '$1' already defined");
                 }
-                $vars{$1}{picture} = 'X' x $2;
+                $vars{$1}{picture} = $2 x $3;
                 return;
             }
             #error("Not processed sentence in DATA DIVISION, WORKING STORAGE section: '$sentence'")
@@ -206,6 +208,10 @@ sub _parse_sentence {
                     if ($vars{$name}{picture} =~ m/^X+$/x) {
                         my $width = length $vars{$name}{picture};
                         $str .= sprintf("%-${width}s", $vars{$name}{value});
+                    } elsif ($vars{$name}{picture} =~ m/^9+$/x) {
+                        my $width = length $vars{$name}{picture};
+                        $str .= sprintf("%-${width}d", $vars{$name}{value});
+                        #$str .= $vars{$name}{value};
                     } else {
                         error("Invalid picture '$vars{$name}{picture}'");
                     }
@@ -235,6 +241,12 @@ sub _parse_sentence {
             die "Variable '$name' was not declared. '$sentence'" if not exists $vars{$name};
             chomp($vars{$name}{value} = <STDIN>);
             # TODO: check if the value fits the picture?
+            return;
+        }
+        if ($sentence =~ m/^\s{4,}  COMPUTE \s+ ($VAR_NAME_REGEX) \s+ = \s+ ($EXPRESSION_REGEX)/x) {
+            my ($name, $expr) = ($1, $2);
+            $expr =~ s/($VAR_NAME_REGEX)/$vars{$1}{value}/gx;
+            $vars{$name}{value} = eval $expr;
             return;
         }
 
