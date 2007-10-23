@@ -157,10 +157,14 @@ sub _parse_sentence {
         my $section = $self->get_section;
         if ($section and $section eq "working_storage") {
             if ($sentence =~ m/01  \s+ ($VAR_NAME_REGEX) \s+ PIC\s+([9X])\((\d+)\)  $/x) {
-                if ($vars{$1}) {
-                    error("Variable '$1' already defined");
+                my ($name, $pic, $cnt) = ($1, $2, $3);
+                if ($name =~ /^\d+$/) {
+                    error("Variable must contain at least one letter or hypen: '$sentence'");
                 }
-                $vars{$1}{picture} = $2 x $3;
+                if ($vars{$name}) {
+                    error("Variable '$name' already defined");
+                }
+                $vars{$name}{picture} = $pic x $cnt;
                 return;
             }
             #error("Not processed sentence in DATA DIVISION, WORKING STORAGE section: '$sentence'")
@@ -198,12 +202,18 @@ sub _parse_sentence {
             (my $disp = $sentence) =~ s/^\s{4,}DISPLAY//x;
             my $str = '';
             my $last = 0;
-            while ($disp =~ m/(?:\s+|\s*,\s*)("([^"]*)"|($VAR_NAME_REGEX))/g) {
+            while ($disp =~ m/(?:\s+|\s*,\s*)   (
+                              "([^"]*)"                  # string
+                              |  (\d+(?:\.\d+)?)         # number
+                              |   ($VAR_NAME_REGEX)      # variable
+                              ) /gx) {
                 #$str .= $LAST_PAREN_MATCH;
                 if (defined $2) {
                     $str .= $2;
-                } else {
-                    my $name = $3;
+                } elsif (defined $3) {
+                    $str .= $3;
+                } elsif (defined $4) {
+                    my $name = $4;
                     # padding of strings
                     if ($vars{$name}{picture} =~ m/^X+$/x) {
                         my $width = length $vars{$name}{picture};
@@ -215,6 +225,8 @@ sub _parse_sentence {
                     } else {
                         error("Invalid picture '$vars{$name}{picture}'");
                     }
+                } else {
+                    error("Invalid part in the DISPLAY row: \n'$sentence'")
                 }
                 $last = $LAST_MATCH_END[1];
             }
@@ -370,6 +382,8 @@ If there is anything in this area that should be reported as error.
 =back
 
 =head1 TODO
+
+Handle floating point numbers as well as strings with . in them.
 
 Examples of code with syntax error and see how the compiler copes with that.
 
