@@ -4,6 +4,8 @@ use warnings FATAL => 'all';
 
 our $VERSION = '0.01';
 
+use English qw( -no_match_vars );
+
 use base qw(Class::Accessor);
 use File::Slurp qw(read_file);
 __PACKAGE__->follow_best_practice;
@@ -164,11 +166,24 @@ sub _parse_sentence {
     }
 
     if ($self->get_state eq "procedure_division") {
-        if ($sentence =~ /^    \s*DISPLAY\s"([^"]*)"$/) {
-            print "$1\n";
+        # TODO: what about     DISPlAY "hello \"foo\" world"
+        # TODO: and about      DISPLAY "hello \\foo"
+        if ($sentence =~ m/^\s{4,}    DISPLAY  \s+  
+                            "([^"]*)"   
+                            ((?:\s+|\s*,\s*)"[^"]*")*$/x) {
+            if (not defined $2) {
+                print "$1\n";
+            } else {
+                my $str = $1;
+                $sentence = substr($sentence, $LAST_MATCH_START[2]);
+                while ($sentence =~ m/(?:\s+|\s*,\s*)"([^"]*)"/g) {
+                    $str .= $1;
+                }
+                print "$str\n";
+            }
             return;
         }
-        if ($sentence =~ /^    \s*STOP\s+RUN$/) {
+        if ($sentence =~ /^\s{4,}STOP\s+RUN$/x) {
             $requirements{stop_run}++;
             exit;
         }
