@@ -9,7 +9,7 @@ use English qw( -no_match_vars );
 use base qw(Class::Accessor);
 use File::Slurp qw(read_file);
 __PACKAGE__->follow_best_practice;
-__PACKAGE__->mk_accessors(qw(state current_row config));
+__PACKAGE__->mk_accessors(qw(state section current_row config));
 
 my $row;
 my @lines;
@@ -25,7 +25,9 @@ my %requirements = (
 
 my %paragraph;
 my $current_paragraph;
+my %vars;
 
+my $VAR_NAME_REGEX = qr/[a-zA-Z-]+/;
 
 sub new {
     my ($class, %config) = @_;
@@ -148,10 +150,27 @@ sub _parse_sentence {
         error("Not processed sentence in ENVIRONMENT DIVISION: '$sentence'")
     }
 
+    #  01 Name PIC X(5).
     if ($self->get_state eq "data_division") {
+        my $section = $self->get_section;
+        if ($section and $section eq "working_storage") {
+            if ($sentence =~ m/01  \s+ ($VAR_NAME_REGEX) \s+ PIC\s+X\((\d+)\)  $/x) {
+                if ($vars{$1}) {
+                    error("Variable '$1' already defined");
+                }
+                $vars{$1}{picture} = 'X' x $2;
+                return;
+            }
+            #error("Not processed sentence in DATA DIVISION, WORKING STORAGE section: '$sentence'")
+        }
+
         if ($sentence =~ /^PROCEDURE\s+DIVISION\s*$/) {
             $requirements{procedure_division} = 1;
             $self->set_state("procedure_division");
+            return;
+        }
+        if ($sentence =~ /^WORKING-STORAGE\s+SECTION$/) {
+            $self->set_section("working_storage");
             return;
         }
         error("Not processed sentence in DATA DIVISION: '$sentence'")
@@ -173,31 +192,37 @@ sub _parse_sentence {
     if ($self->get_state eq "procedure_division") {
         # TODO: what about     DISPlAY "hello \"foo\" world"
         # TODO: and about      DISPLAY "hello \\foo"
-        if ($sentence =~ m/^\s{4,}    DISPLAY  \s+  
-                            "([^"]*)"   
-                            ((?:\s+|\s*,\s*)"[^"]*")*$/x) {
-            if (not defined $2) {
-                print "$1\n";
-            } else {
-                my $str = $1;
-                $sentence = substr($sentence, $LAST_MATCH_START[2]);
-                while ($sentence =~ m/(?:\s+|\s*,\s*)"([^"]*)"/g) {
-                    $str .= $1;
-                }
-                print "$str\n";
+        if ($sentence =~ m/^\s{4,}DISPLAY\b/x) {
+            (my $disp = $sentence) =~ s/^\s{4,}DISPLAY//x;
+            my $str = '';
+            my $last = 0;
+            while ($disp =~ m/(?:\s+|\s*,\s*)"([^"]*)"/g) {
+                $str .= $1;
+                $last = $LAST_MATCH_END[1]+1;
             }
+            if ($last < length($disp)) {
+                error("Invalid DISPLAY: '$sentence'\nLAST_MATCH_END:$last length: " .  length($disp));
+            }
+            print "$str\n";
             return;
         }
-        if ($sentence =~ /^\s{4,}STOP\s+RUN$/x) {
+        if ($sentence =~ m/^\s{4,}STOP\s+RUN$/x) {
             $requirements{stop_run}++;
             exit;
         }
-        if ($sentence =~ /^[A-Z-]+$/) {
+        if ($sentence =~ m/^[A-Z-]+$/x) {
             if ($paragraph{$sentence}) {
                 error("Paragraph '$sentence' was already defined");
             }
             $paragraph{$sentence} = 1;
             $current_paragraph = $sentence;
+            return;
+        }
+        if ($sentence =~ m/^\s{4,}  ACCEPT \s+ ($VAR_NAME_REGEX)$/x) {
+            my $name = $1;
+            die "Variable '$name' was not declared. '$sentence'" if not exists $vars{$name};
+            $vars{$name}{value} = <STDIN>;
+            # TODO: check if the value fits the picture?
             return;
         }
 

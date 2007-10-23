@@ -1,4 +1,4 @@
-      * Adding to numbers together
+      * Adding two numbers together
        IDENTIFICATION DIVISION.
        PROGRAM-ID. adding.
        ENVIRONMENT DIVISION.
