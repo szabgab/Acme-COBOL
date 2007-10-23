@@ -4,5 +4,5 @@
        ENVIRONMENT DIVISION.
        DATA DIVISION.
        PROCEDURE DIVISION.
-       DISPLAY "Hello World!".
-       STOP RUN.
+           DISPLAY "Hello World!".
+           STOP RUN.

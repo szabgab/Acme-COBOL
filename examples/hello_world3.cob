@@ -1,11 +1,11 @@
-      * Hello world
-       IDENTIFICATION
-      * comment
-         DIVISION.
+      * Hello world with paragraphs
+       IDENTIFICATION DIVISION.
        PROGRAM-ID. helloworld.
        ENVIRONMENT DIVISION.
        DATA DIVISION.
        PROCEDURE DIVISION.
-       DISPLAY "Hello"
-           " World!".
-       STOP RUN.
+
+       PROGRAM-BEGIN-PAR.
+           DISPLAY "Hello World!".
+       PROGRAM-END-PAR.
+           STOP RUN.

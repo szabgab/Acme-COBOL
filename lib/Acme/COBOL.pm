@@ -246,6 +246,12 @@ If there is anything in this area that should be reported as error.
 
 =back
 
+=head1 TODO
+
+Examples of code with syntax error and see how the compiler copes with that
+
+Use various Cobol versions implemented as dialects in cobc -std=<dialect>
+
 =head1 See Also
 
 L<http://www.perlmonks.org/?node_id=18048>

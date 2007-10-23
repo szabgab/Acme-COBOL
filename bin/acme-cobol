@@ -2,7 +2,10 @@
 use strict;
 use warnings FATAL => 'all';
 
+use lib 'lib';
+
 use Getopt::Long qw(GetOptions);
+use Acme::COBOL;
 my %opt = (
     mode => 'acme',
 );
@@ -14,14 +17,13 @@ GetOptions(\%opt,
 ) or usage();
 usage() if $opt{help};
 
-my $file = shift;
+my $file = shift or usage();
 
 if ($opt{mode} eq 'cobc') {
     system "cobc $file -x -o demo";
     system "./demo";
     unlink "demo";
 } elsif ($opt{mode} eq 'acme') {
-    require Acme::COBOL;
     my $cobol = Acme::COBOL->new(%opt);
     $cobol->run_file($file);
 } else {
@@ -32,6 +34,8 @@ if ($opt{mode} eq 'cobc') {
 
 sub usage {
     print <<"END_USAGE";
+Acme::COBOL v$Acme::COBOL::VERSION Copyright (C) Gabor Szabo
+
 Usage: $0 FILENAME
         --help
         --parse_debug
