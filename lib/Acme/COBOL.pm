@@ -12,6 +12,15 @@ __PACKAGE__->mk_accessors(qw(state current_row config));
 my $row;
 my @lines;
 my $left_over = '';
+my %requirements = (
+    identification_division => 0,
+    program_id              => '',
+    environment_division    => 0,
+    data_division           => 0,
+    procedure_division      => 0,
+    stop_run                => 0,
+);
+
 
 sub new {
     my ($class, %config) = @_;
@@ -31,6 +40,12 @@ sub parse {
     $row = 0;
     while (my $sentence = $self->_next_sentence()) {
         $self->_parse_sentence($sentence);
+    }
+
+    foreach my $k (keys %requirements) {
+        if (not $requirements{$k}) {
+            die "Missing $k\n"; 
+        }
     }
 }
 
@@ -62,7 +77,8 @@ sub _next_sentence {
 
         my $loc = index($line,  '.');
         if ($loc >= 0) {
-            $sentence .= substr($line, 0, $loc+1, "");
+            $sentence .= substr($line, 0, $loc, "");
+            $line = substr($line, 1);
             if ($line =~ /\S/) {
                 $left_over = $line;
             } else {
@@ -91,9 +107,36 @@ sub _parse_sentence {
     # parsing.
 
     if (not $self->get_state) {
-        
+        if ($sentence =~ m/^IDENTIFICATION\s+DIVISION\s*$/x) {
+            $self->set_state("identification_division");
+            $requirements{identification_division} = 1;
+            return;
+        } else {
+            die "ERROR: missing IDENTIFICATION DIVISION\n";
+        }
     }
 
+    if ($self->get_state eq "identification_division") {
+        if ($sentence eq "PROGRAM-ID") {
+            if ($requirements{program_id}) {
+                die "ERROR: PROGRAM-ID was already set\n";
+            }
+            $self->set_state("program_id");
+            return;
+        }
+        # TODO else error??
+    }
+
+    if ($self->get_state eq "program_id") {
+        $sentence =~ s/^\s+//;
+        if ($sentence =~ m/^[A-Z-]+$/x) {
+            # TODO: optionally require to be the same as the name of the file
+            $requirements{program_id} = $sentence;
+            $self->set_state("identification_division");
+        } else {
+            die "ERROR: Invalid program_id '$sentence'\n";
+        }
+    }
 
     return;
 }
@@ -142,15 +185,24 @@ if to allow switches for the various implementations?
 COBOL programs have 4 DIVISIONS:
 
  IDENTIFICATION DIVISION.
- PROGRAM-ID. ACMECOBOL. 
  ENVIRONMENT DIVISION.
  DATA DIVISION.
  PROCEDURE DIVISION.
+
+We require all fur divisions to be included.
+In a relaxed version we can leave out the ENVIRONMENT and DATA divisions if
+they are really not needed.
 
 End of program is indicated by
 
  STOP RUN.
 
+The IDENTIFICATION DIVISION must contain a declaration of PROGRAM-ID:
+Where the actual ID needs to be upper case letters and dash. 
+(In relaxed version we can also allow lower case name)
+Preferably the name should be the same as the filename.
+
+ PROGRAM-ID. ACMECOBOL. 
 
 =head2 rows 
 

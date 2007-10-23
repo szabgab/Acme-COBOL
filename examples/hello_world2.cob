@@ -1,6 +1,6 @@
       * Sample COBOL program
        IDENTIFICATION DIVISION.
-       PROGRAM-ID. helloworld.
+       PROGRAM-ID. HELLOWORLD.
        PROCEDURE DIVISION.
        DISPLAY "Hello"
            " World!".
