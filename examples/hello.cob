@@ -1,6 +1,7 @@
-      * Sample COBOL program
+      * Hello with input string
        IDENTIFICATION DIVISION.
        PROGRAM-ID. hello.
+       ENVIRONMENT DIVISION.
        DATA DIVISION.
        WORKING-STORAGE SECTION. 
        01 Name     PIC X(5).

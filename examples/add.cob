@@ -1,6 +1,7 @@
-      * Sample COBOL program
+      * Adding to numbers together
        IDENTIFICATION DIVISION.
        PROGRAM-ID. adding.
+       ENVIRONMENT DIVISION.
        DATA DIVISION.
        WORKING-STORAGE SECTION. 
        01 Num1     PIC 9(5).
