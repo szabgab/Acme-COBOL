@@ -252,7 +252,12 @@ sub _parse_sentence {
             my $name = $1;
             die "Variable '$name' was not declared. '$sentence'" if not exists $vars{$name};
             chomp($vars{$name}{value} = <STDIN>);
+
             # TODO: check if the value fits the picture?
+            if ($vars{$name}{picture} =~ /X/ and length($vars{$name}{value}) > length($vars{$name}{picture})) {
+                $vars{$name}{value} = substr($vars{$name}{value}, 0, length $vars{$name}{picture});
+            }
+
             return;
         }
         if ($sentence =~ m/^\s{4,}  COMPUTE \s+ ($VAR_NAME_REGEX) \s+ = \s+ ($EXPRESSION_REGEX)/x) {
