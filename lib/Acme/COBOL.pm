@@ -7,11 +7,18 @@ our $VERSION = '0.01';
 use base qw(Class::Accessor);
 use File::Slurp qw(read_file);
 __PACKAGE__->follow_best_practice;
-__PACKAGE__->mk_accessors(qw(state current_row));
+__PACKAGE__->mk_accessors(qw(state current_row config));
 
 my $row;
 my @lines;
 my $left_over = '';
+
+sub new {
+    my ($class, %config) = @_;
+    my $self = bless {}, $class;
+    $self->set_config(\%config);
+    return $self;
+}
 
 sub parse {
     my ($self, $file) = @_;
@@ -74,7 +81,20 @@ sub _next_sentence {
 
 sub _parse_sentence {
     my ($self, $sentence) = @_;
-    print "'$sentence'\n";
+
+    if ($self->get_config->{parse_debug}) {
+        print "'$sentence'\n";
+        return;
+    }
+    # TODO maybe add a debugging option to print sentences?
+    # and then we can create .parse files in the examples directory to hold the expected output of this
+    # parsing.
+
+    if (not $self->get_state) {
+        
+    }
+
+
     return;
 }
 

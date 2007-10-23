@@ -2,6 +2,15 @@
 use strict;
 use warnings FATAL => 'all';
 
+use Getopt::Long qw(GetOptions);
+my %opt;
+
+GetOptions(\%opt,
+    "parse_debug",
+    "help",
+) or usage();
+usage() if $opt{help};
+
 my $file = shift;
 
 #system "cobc $file -o demo";
@@ -9,5 +18,18 @@ my $file = shift;
 #unlink "demo";
 
 use Acme::COBOL;
-my $cobol = Acme::COBOL->new;
+my $cobol = Acme::COBOL->new(%opt);
 $cobol->run_file($file);
+
+
+
+sub usage {
+    print <<"END_USAGE";
+Usage: $0 FILENAME
+        --help
+        --parse_debug
+END_USAGE
+
+    exit;
+}
+
