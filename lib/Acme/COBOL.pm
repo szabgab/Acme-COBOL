@@ -248,7 +248,10 @@ If there is anything in this area that should be reported as error.
 
 =head1 TODO
 
-Examples of code with syntax error and see how the compiler copes with that
+Examples of code with syntax error and see how the compiler copes with that.
+
+e.g. missing DIVISIONS, sentences starting in Area A and not in Area B,
+Lines too long
 
 Use various Cobol versions implemented as dialects in cobc -std=<dialect>
 
