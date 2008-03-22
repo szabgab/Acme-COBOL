@@ -6,7 +6,7 @@
        WORKING-STORAGE SECTION. 
        01 Num1     PIC 9(5).
        01 Num2     PICTURE   9(5).
-       01 Result   PIC 9(5).
+       01 Result   PIC 99999.
        PROCEDURE DIVISION.
            DISPLAY "Please type in a number".
            ACCEPT Num1.
