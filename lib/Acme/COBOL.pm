@@ -156,7 +156,7 @@ sub _parse_sentence {
     if ($self->get_state eq "data_division") {
         my $section = $self->get_section;
         if ($section and $section eq "working_storage") {
-            #if ($sentence =~ m/01  \s+ ($VAR_NAME_REGEX) \s+ PIC(?:TURE)?  \s+   ([X()\d])+   $/x) {
+            # if ($sentence =~ m/01  \s+ ($VAR_NAME_REGEX) \s+ PIC(?:TURE)?  \s+   ([X()\d])+   $/x) { 
                 my ($name, $pic, $cnt) = split / +/, $sentence;
                 if ($name =~ /^\d+$/) {
                     error("Variable must contain at least one letter or hypen: '$sentence'");
@@ -166,7 +166,7 @@ sub _parse_sentence {
                 }
                 $vars{$name}{picture} = $pic x $cnt;
                 return;
-            }
+            # }
             #error("Not processed sentence in DATA DIVISION, WORKING STORAGE section: '$sentence'")
         }
 

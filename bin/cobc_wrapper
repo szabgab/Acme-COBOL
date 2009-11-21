@@ -1,0 +1,6 @@
+#!/usr/bin/perl
+use strict;
+use warnings FATAL => 'all';
+
+system "cobc $file -x $std -o demo";
+system "./demo";

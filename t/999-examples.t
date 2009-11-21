@@ -1,8 +1,28 @@
 use strict;
-use warnings FATAL => 'all';
+use warnings;
 
+use Test::Most;
+use lib '/home/gabor/work/Test-Snapshots/lib';
+use Test::Snapshots;
+
+bail_on_fail();
+
+Test::Snapshots::command('bin/cobc_wrapper');
+Test::Snapshots::debug(1);
+#Test::Snapshots::combine(1);
+Test::Snapshots::set_glob('*.cob');
+
+#Test::Snapshots::skip({
+#	'examples/add.cob'   => 'reason',
+#});
+
+Test::Snapshots::test_all_snapshots('examples');
+
+
+
+__END__
 use Test::More;
-use Text::Diff qw(diff);
+#use Text::Diff qw(diff);
 use Getopt::Long qw(GetOptions);
 my $tests = 0;
 
